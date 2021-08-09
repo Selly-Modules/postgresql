@@ -15,12 +15,14 @@ var (
 	sqlxClient *sqlx.DB
 )
 
-// Connect to postgres database
+// Connect to postgresql database
 func Connect(host, user, password, dbname, port, sslmode string) error {
 	// Connect string
 	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
 		host, user, password, dbname, port, sslmode,
 	)
+
+	// TODO: write case for SSL mode
 
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
