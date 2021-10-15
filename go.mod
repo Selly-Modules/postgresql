@@ -7,4 +7,5 @@ require (
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/lib/pq v1.10.2
 	github.com/logrusorgru/aurora v2.0.3+incompatible
+	go.elastic.co/apm/module/apmsql v1.14.0
 )

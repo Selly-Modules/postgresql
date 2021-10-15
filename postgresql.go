@@ -9,6 +9,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // For postgres dialect
 	"github.com/logrusorgru/aurora"
+
+	"go.elastic.co/apm/module/apmsql"
+	_ "go.elastic.co/apm/module/apmsql/pq" // For apm dialect
 )
 
 var (
@@ -24,10 +27,17 @@ func Connect(host, user, password, dbname, port, sslmode string) error {
 
 	// TODO: write case for SSL mode
 
-	db, err := sqlx.Connect("postgres", dsn)
+	// db, err := sqlx.Connect("postgres", dsn)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	apmDB, err := apmsql.Open("postgres", dsn)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	db := sqlx.NewDb(apmDB, "postgres")
 
 	fmt.Println(aurora.Green("*** CONNECTED TO POSTGRESQL - SQLX: " + dsn))
 
