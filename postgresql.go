@@ -23,21 +23,19 @@ type Config struct {
 	ConnectionLifetime time.Duration
 }
 
-var db *sql.DB
-
 // Connect ...
-func Connect(cfg Config, server string) {
+func Connect(cfg Config, server string) *sql.DB {
 	uri := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
 	// connect
-	c, err := sql.Open("pgx", uri)
+	db, err := sql.Open("pgx", uri)
 	if err != nil {
 		panic(err)
 	}
 
 	// ping
-	if err = c.Ping(); err != nil {
+	if err = db.Ping(); err != nil {
 		logger.Error("pgx ping", logger.LogData{
 			Source:  "Connect",
 			Message: err.Error(),
@@ -45,9 +43,6 @@ func Connect(cfg Config, server string) {
 		})
 		panic(err)
 	}
-
-	// assign
-	db = c
 
 	// config
 	if cfg.MaxOpenConnections == 0 {
@@ -70,9 +65,6 @@ func Connect(cfg Config, server string) {
 	boil.DebugMode = cfg.IsDebug
 
 	fmt.Printf("⚡️[postgres]: connected to %s:%d \n", cfg.Host, cfg.Port)
-}
 
-// GetDB ...
-func GetDB() *sql.DB {
 	return db
 }
