@@ -1,50 +1,78 @@
 package postgresql
 
 import (
+	"database/sql"
 	"fmt"
-	"log"
+	"github.com/Selly-Modules/logger"
 	"time"
 
-
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // For postgres dialect
-	"github.com/logrusorgru/aurora"
+	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-var (
-	sqlxClient *sqlx.DB
-)
+type Config struct {
+	Host               string
+	Port               int
+	User               string
+	Password           string
+	DBName             string
+	SSLMode            string
+	IsDebug            bool
+	MaxOpenConnections int
+	MaxIdleConnections int
+	ConnectionLifetime time.Duration
+}
 
-// Connect to postgresql database
-func Connect(host, user, password, dbname, port, sslmode string) error {
-	// Connect string
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
-		host, user, password, dbname, port, sslmode,
-	)
+var db *sql.DB
 
-	// TODO: write case for SSL mode
+// Connect ...
+func Connect(cfg Config, server string) {
+	uri := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
-	db, err := sqlx.Connect("postgres", dsn)
+	// connect
+	c, err := sql.Open("pgx", uri)
 	if err != nil {
-		log.Fatalln(err)
+		panic(err)
 	}
 
-	fmt.Println(aurora.Green("*** CONNECTED TO POSTGRESQL - SQLX: " + dsn))
+	// ping
+	if err = c.Ping(); err != nil {
+		logger.Error("pgx ping", logger.LogData{
+			Source:  "Connect",
+			Message: err.Error(),
+			Data:    cfg,
+		})
+		panic(err)
+	}
 
-	// Config connection pool
-	sqlDB := db.DB
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetMaxIdleConns(20)
-	sqlDB.SetConnMaxLifetime(time.Minute * 5)
+	// assign
+	db = c
 
-	// Assign client
-	sqlxClient = db
+	// config
+	if cfg.MaxOpenConnections == 0 {
+		cfg.MaxOpenConnections = 25
+	}
+	if cfg.MaxIdleConnections == 0 {
+		cfg.MaxIdleConnections = 25
+	}
+	if cfg.ConnectionLifetime == 0 {
+		cfg.ConnectionLifetime = 5 * time.Minute
+	}
+	db.SetMaxOpenConns(cfg.MaxOpenConnections)
+	db.SetMaxIdleConns(cfg.MaxIdleConnections)
+	db.SetConnMaxLifetime(cfg.ConnectionLifetime)
 
-	return nil
+	// run migration
+	runMigration(db, server)
+
+	// debug mode
+	boil.DebugMode = cfg.IsDebug
+
+	fmt.Printf("⚡️[postgres]: connected to %s:%d \n", cfg.Host, cfg.Port)
 }
 
-// GetSqlxInstance ...
-func GetSqlxInstance() *sqlx.DB {
-	return sqlxClient
+// GetDB ...
+func GetDB() *sql.DB {
+	return db
 }
-
