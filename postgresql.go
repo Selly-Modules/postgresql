@@ -24,7 +24,7 @@ type Config struct {
 }
 
 // Connect ...
-func Connect(cfg Config, server string) *sql.DB {
+func Connect(cfg Config, server string) (*sql.DB, error) {
 	uri := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
 
@@ -41,7 +41,7 @@ func Connect(cfg Config, server string) *sql.DB {
 			Message: err.Error(),
 			Data:    cfg,
 		})
-		panic(err)
+		return nil, err
 	}
 
 	// config
@@ -66,5 +66,5 @@ func Connect(cfg Config, server string) *sql.DB {
 
 	fmt.Printf("⚡️[postgres]: connected to %s:%d \n", cfg.Host, cfg.Port)
 
-	return db
+	return db, nil
 }
