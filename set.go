@@ -32,3 +32,10 @@ func SetTime(val time.Time) null.Time {
 		Valid: true,
 	}
 }
+
+func SetJSON(val []byte) null.JSON {
+	return null.JSON{
+		JSON:  val,
+		Valid: true,
+	}
+}
