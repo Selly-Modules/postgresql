@@ -1,4 +1,4 @@
-package null
+package postgresql
 
 import (
 	"github.com/volatiletech/null/v8"
