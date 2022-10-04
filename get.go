@@ -32,3 +32,10 @@ func GetTime(val null.Time) (res time.Time) {
 	}
 	return val.Time
 }
+
+func GetJSON(val null.JSON) (res []byte) {
+	if !val.Valid {
+		return
+	}
+	return val.JSON
+}
